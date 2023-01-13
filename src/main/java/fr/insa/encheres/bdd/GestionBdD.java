@@ -251,7 +251,7 @@ public class GestionBdD {
         }
     }
 
-    public static void afficherUtilisateurs(Connection con)
+    public static void AfficherUtilisateurs(Connection con)
             throws SQLException {
         con.setAutoCommit(false);
         try (Statement st = con.createStatement()) {
@@ -268,6 +268,7 @@ public class GestionBdD {
                 String codepostal = result.getString("codepostal");
                 String email = result.getString("email");
                 String pass = result.getString("pass");
+                System.out.println(id + " : " + nom + " " + prenom + " " + codepostal + " " + email + " " + pass);
 
             }
         } catch (SQLException ex) {
@@ -733,18 +734,21 @@ public class GestionBdD {
         }
         return fin;
     }
+    public static String motcle;
 
-    public static ArrayList ChercherObjetsMotCle(Connection con, String motcle)
+    public static ArrayList ChercherObjetsMotCle(Connection con)
             throws SQLException, IOException, ClassNotFoundException {
         ResultSet result;
         ArrayList<Objet> listeObjets = new ArrayList<>();
+        motcle = Lire.S();
         con.setAutoCommit(false);
         try (Statement st = con.createStatement()) {
             result = st.executeQuery(
                     """
-                    select * from objet where titre like '%"+motcle+"%' or description like '%"+motcle+"%'
+                    select * from objet where titre like '"+motcle+"' or description like '%"+motcle+"%'
                     """
             );
+            System.out.println("Voici la liste des objets avec ce(s) mot(s) clé(s) :");
             while (result.next()) {
                 int id = result.getInt("id");
                 String titre = result.getString("titre");
@@ -755,6 +759,7 @@ public class GestionBdD {
                 int prixbase = result.getInt("prixbase");
                 int proposepar = result.getInt("proposepar");
                 listeObjets.add(new Objet(id, titre, description, debut, fin, categorie, prixbase, proposepar));
+                System.out.println(listeObjets);
             }
         } catch (SQLException ex) {
             // quelque chose s'est mal passé
@@ -771,7 +776,7 @@ public class GestionBdD {
         return listeObjets;
     }
 
-    public static void DemanderCategorie(Connection con)
+    public static void LireCategorie(Connection con)
             throws SQLException {
         System.out.println("nom categorie :");
         String nom = Lire.S();
@@ -797,7 +802,7 @@ public class GestionBdD {
                 String prixbase = result.getString("prixbase");
                 int categorie = result.getInt("categorie");
                 int proposepar = result.getInt("proposepar");
-                System.out.println(id + " : " + titre + " " + description + " " + debut + " " + fin + " " + prixbase + " " + categorie + " " + proposepar);
+                System.out.println(id + " : " + titre + " " + description + " " + debut + " " + fin + " " + prixbase + "€ " + categorie + " " + proposepar);
             }
         } catch (SQLException ex) {
             // quelque chose s'est mal passé
@@ -841,35 +846,6 @@ public class GestionBdD {
         return titre;
     }
 
-    public static void DeleteObjet(Connection con, int idObjet)
-            throws SQLException {
-        con.setAutoCommit(false);
-
-        try (PreparedStatement pst = con.prepareStatement(
-                "delete from enchere where sur = " + idObjet + " ")) {
-            pst.executeUpdate();
-            con.commit();
-            con.setAutoCommit(true);
-        } catch (SQLException ex) {
-            con.rollback();
-            throw ex;
-        } finally {
-            con.setAutoCommit(true);
-        }
-        con.setAutoCommit(false);
-        try (PreparedStatement pst = con.prepareStatement(
-                "delete from objet where id = " + idObjet + " ")) {
-            pst.executeUpdate();
-            con.commit();
-            con.setAutoCommit(true);
-        } catch (SQLException ex) {
-            con.rollback();
-            throw ex;
-        } finally {
-            con.setAutoCommit(true);
-        }
-    }
-
     public static void createObjet(Connection con, String titre, String description, Timestamp debut, Timestamp fin, int prixbase, int categorie, int proposepar)
             throws SQLException, IOException {
         con.setAutoCommit(false);
@@ -910,7 +886,7 @@ public class GestionBdD {
         int jourd = Lire.i();
         System.out.println("Debut de la vente Heure:");
         int heured = Lire.i();
-        Timestamp debutobjet = new Timestamp(anneed, moisd, jourd, heured, 0, 0, 0);
+        Timestamp debutobjet = new Timestamp(anneed-1900, moisd-1, jourd, heured, 0, 0, 0);
         System.out.println("Fin de la vente Année:");
         int anneef = Lire.i();
         System.out.println("Fin de la vente Mois:");
@@ -919,7 +895,7 @@ public class GestionBdD {
         int jourf = Lire.i();
         System.out.println("Fin de la vente Heure:");
         int heuref = Lire.i();
-        Timestamp finobjet = new Timestamp(anneef, moisf, jourf, heuref, 0, 0, 0);
+        Timestamp finobjet = new Timestamp(anneef-1900, moisf-1, jourf, heuref, 0, 0, 0);
         System.out.println("Prix de base de l'objet :");
         int prixbase = Lire.i();
         System.out.println("Categorie de l'objet :");
@@ -928,95 +904,27 @@ public class GestionBdD {
         int categorie = Lire.i();
         createObjet(con, titre, description, debutobjet, finobjet, prixbase, categorie, proposepar);
     }
-
-    public static void EffacerUtilisateurs(Connection con) throws SQLException {
-        try (Statement st = con.createStatement()) {
-            try {
-                st.executeUpdate(
-                        """
-                    alter table enchere
-                        drop constraint fk_enchere_de
-                             """);
-                System.out.println("constraint fk_enchere_de dropped");
-            } catch (SQLException ex) {
-            }
-            try {
-                st.executeUpdate(
-                        """
-                    alter table objet
-                        drop constraint fk_objet_propose_par
-                    """);
-                System.out.println("constraint fk_objet_propose_par dropped");
-            } catch (SQLException ex) {
-            }
-            try {
-                st.executeUpdate(
-                        """
-                    drop table utilisateur
-                    """);
-                System.out.println("table utilisateur dropped");
-            } catch (SQLException ex) {
-            }
-        }
+    
+    public static void LireEnchere(Connection con)
+            throws SQLException, IOException {
+        System.out.println("Date de l'enchère Année:");
+        int anneed = Lire.i();
+        System.out.println("Date de l'enchère Mois:");
+        int moisd = Lire.i();
+        System.out.println("Date de l'enchère Jour:");
+        int jourd = Lire.i();
+        System.out.println("Date de l'enchère Heure:");
+        int heured = Lire.i();
+        Timestamp debutobjet = new Timestamp(anneed, moisd, jourd, heured, 0, 0, 0);
+        System.out.println("Prix de l'enchère :");
+        int montant = Lire.i();
+        System.out.println("Votre id d'utilisateur :");
+        int de = Lire.i();
+        System.out.println("Objet désiré :");
+        int sur = Lire.i();
+        createEnchere(con,debutobjet, montant, de, sur);
     }
 
-    public static void EffacerEncheres(Connection con) throws SQLException {
-        try (Statement st = con.createStatement()) {
-            try {
-                st.executeUpdate(
-                        """
-                    alter table enchere
-                        drop constraint fk_enchere_de
-                             """);
-                System.out.println("constraint fk_enchere_de dropped");
-            } catch (SQLException ex) {
-                // nothing to do : maybe the constraint was not created
-            }
-            try {
-                st.executeUpdate(
-                        """
-                    alter table enchere
-                        drop constraint fk_enchere_sur
-                    """);
-                System.out.println("constraint fk_enchere_sur dropped");
-            } catch (SQLException ex) {
-                // nothing to do : maybe the constraint was not created
-            }
-            try {
-                st.executeUpdate(
-                        """
-                    drop table enchere
-                    """);
-                System.out.println("table enchere dropped");
-            } catch (SQLException ex) {
-                // nothing to do : maybe the table was not created
-            }
-        }
-    }
-
-//    public static void EffacerCategories(Connection con) throws SQLException {
-//        try ( Statement st = con.createStatement()) {
-//            try {
-//                st.executeUpdate(
-//                        """
-//                    alter table objet
-//                        drop constraint fk_objet_categorie
-//                    """);
-//                System.out.println("constraint fk_objet_categorie dropped");
-//            } catch (SQLException ex) {
-//                // nothing to do : maybe the constraint was not created
-//            }
-//            try {
-//                st.executeUpdate(
-//                        """
-//                    drop table categorie
-//                    """);
-//                System.out.println("table categorie dropped");
-//            } catch (SQLException ex) {
-//                // nothing to do : maybe the table was not created
-//            }
-//        }
-//    }
     public static void createSchemaInitial(Connection con) throws SQLException, IOException {
         deleteSchema(con);
         createSchema(con);
@@ -1027,10 +935,9 @@ public class GestionBdD {
         createCategorie(con, "Multimédias");
         createCategorie(con, "Alcools");
         createCategorie(con, "Sports");
-        //année voulue - 1900 pour l'année, 0 pour le 1er mois (janvier)
-        Timestamp debut = new Timestamp(2022, 10, 25, 12, 0, 0, 0);
-        Timestamp debut2 = new Timestamp(2022, 11, 15, 14, 0, 0, 0);
-        Timestamp fin = new Timestamp(2023, 11, 28, 12, 0, 0, 0);
+        Timestamp debut = new Timestamp(2022-1900, 10-1, 25, 12, 0, 0, 0);
+        Timestamp debut2 = new Timestamp(2022-1900, 11-1, 15, 14, 0, 0, 0);
+        Timestamp fin = new Timestamp(2023-1900, 11-1, 28, 12, 0, 0, 0);
         createObjet(con, "Table", "Table basse", debut, fin, 30, 1, 1);
         createObjet(con, "Lit", "Lit simples avec sommier en lattes", debut, fin, 80, 1, 1);
         createObjet(con, "Robe", "Robe noire de gala", debut, fin, 60, 2, 2);
@@ -1057,10 +964,12 @@ public class GestionBdD {
             System.out.println("4 --> Afficher la liste des utilisateurs");
             System.out.println("5 --> Ajouter une categorie");
             System.out.println("6 --> Afficher la liste des categories");
-            System.out.println("7 --> Afficher la liste des encheres");
-            System.out.println("8 --> Ajouter un objet");
-            System.out.println("9 --> Afficher la liste des objets");
-            System.out.println("10 --> Quitter");
+            System.out.println("7 --> Ajouter une enchère");
+            System.out.println("8 --> Afficher la liste des encheres");
+            System.out.println("9 --> Ajouter un objet");
+            System.out.println("10 --> Afficher la liste des objets");
+            System.out.println("11 --> Chercher objet par mot clé");
+            System.out.println("99 --> Quitter");
             int reponse = -1;
             while (reponse < 0) {
                 reponse = Lire.i();
@@ -1080,30 +989,38 @@ public class GestionBdD {
                         System.out.println("Vous avez créer un utilisateur");
                         break;
                     case 4:
-                        //AfficherUtilisateurs(con);
                         System.out.println("Voici la liste des utilisateurs");
+                        AfficherUtilisateurs(con);
                         break;
                     case 5:
-                        DemanderCategorie(con);
+                        LireCategorie(con);
                         System.out.println("La catégorie à été créee");
                         break;
                     case 6:
-                        AfficherCategorie(con);
                         System.out.println("Voici la liste des catégories");
+                        AfficherCategorie(con);
                         break;
                     case 7:
-                        AfficherEncheres(con);
-                        System.out.println("Voici la liste des enchères");
+                        LireEnchere(con);
+                        System.out.println("Votre enchère a été créée");
                         break;
                     case 8:
+                        System.out.println("Voici la liste des enchères");
+                        AfficherEncheres(con);
+                        break;
+                    case 9:
                         LireObjet(con);
                         System.out.println("L'objet a été créé");
                         break;
-                    case 9:
-                        AfficherObjets(con);
-                        System.out.println("Voici la liste des objets");
-                        break;
                     case 10:
+                        System.out.println("Voici la liste des objets");
+                        AfficherObjets(con);
+                        break;
+                    case 11:
+                        System.out.println("Mot(s) clé(s) :");
+                        ChercherObjetsMotCle(con);
+                        break;
+                    case 99:
                         continuer = false;
                         System.out.println("Vous venez de quitter le menu");
                         break;
@@ -1120,9 +1037,7 @@ public class GestionBdD {
     public static void main(String[] args) throws IOException {
         try {
             Connection con = defautConnect();
-            //createSchema(con);
-            //deleteSchema(con);
-            //createSchemaInitial(con);
+            createSchemaInitial(con);
             Menu(con);
 
         } catch (ClassNotFoundException ex) {
