@@ -82,7 +82,7 @@ public class EnteteInitiale extends MyHorizontalLayout {
             this.main.setMainContent(new NouvelUtilisateur(this.main));
         });
         this.connection.addClickListener((t) -> {
-            this.main.setMainContent(new PageConnection(this.main));
+            this.main.setMainContent(new PageConnexion(this.main));
         });
         this.message.addClickListener((event) -> {
             Notification.show("Merci d'avoir cliqué sur le bouton surprise, "

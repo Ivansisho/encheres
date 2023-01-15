@@ -45,4 +45,8 @@ public class VuePrincipale {
         this.mainContent.setHeightFull();
     }
     
+    public SessionInfo getSessionInfo() {
+        return sessionInfo;
+    }
+    
 }

@@ -5,6 +5,7 @@
 package fr.insa.encheres.bdd;
 
 import fr.insa.encheres.model.Objet;
+import fr.insa.encheres.model.Utilisateur;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -14,6 +15,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Optional;
 
 /**
  *
@@ -924,6 +926,24 @@ public class GestionBdD {
         int sur = Lire.i();
         createEnchere(con,debutobjet, montant, de, sur);
     }
+    
+    public static Optional<Utilisateur> login(Connection con, int id, String nom, String prenom, String email, String pass, String codepostal) throws SQLException {
+        try ( PreparedStatement pst = con.prepareStatement(
+                "select fdbutilisateur.id as uid,"
+                + " from fdbutilisateur "
+                + " where fdbutilisateur.nom = ? and pass = ?")) {
+
+            pst.setString(1, nom);
+            pst.setString(2, pass);
+            ResultSet res = pst.executeQuery();
+            if (res.next()) {
+                System.out.println("Login");
+            } else {
+                return Optional.empty();
+            }
+        }
+        return null;
+    }
 
     public static void createSchemaInitial(Connection con) throws SQLException, IOException {
         deleteSchema(con);
@@ -1047,3 +1067,4 @@ public class GestionBdD {
         }
     }
 }
+// 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
